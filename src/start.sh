@@ -157,7 +157,7 @@ for TARGET_DIR in "${!MODEL_CATEGORIES[@]}"; do
 
     for MODEL_ID in "${MODEL_IDS[@]}"; do
         echo "Downloading model: $MODEL_ID to $TARGET_DIR"
-        (cd "$TARGET_DIR" && download.py --model "$MODEL_ID") &
+        (cd "$TARGET_DIR" && download.py --model "$MODEL_ID")
     done
 done
 
