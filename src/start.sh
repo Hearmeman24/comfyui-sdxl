@@ -142,6 +142,16 @@ if [ ! -f "$NETWORK_VOLUME/ComfyUI/models/upscale_models/4xLSDIR.pth" ]; then
 else
     echo "4xLSDIR.pth already exists. Skipping."
 fi
+if [ ! -f "$NETWORK_VOLUME/ComfyUI/models/upscale_models/4xFaceUpDAT.pth" ]; then
+    if [ -f "/4xFaceUpDAT.pth" ]; then
+        mv "/4xFaceUpDAT.pth" "$NETWORK_VOLUME/ComfyUI/models/upscale_models/4xFaceUpDAT.pth"
+        echo "Moved 4xFaceUpDAT.pth to the correct location."
+    else
+        echo "4xFaceUpDAT.pth not found in the root directory."
+    fi
+else
+    echo "4xFaceUpDAT.pth already exists. Skipping."
+fi
 
 echo "Finished downloading models!"
 
@@ -186,6 +196,46 @@ done
 # Workspace as main working directory
 echo "cd $NETWORK_VOLUME" >> ~/.bashrc
 
+if [ "$change_preview_method" == "true" ]; then
+    echo "Updating default preview method..."
+    CONFIG_PATH="$NETWORK_VOLUME/ComfyUI/user/default/ComfyUI-Manager"
+    CONFIG_FILE="$CONFIG_PATH/config.ini"
+
+# Ensure the directory exists
+mkdir -p "$CONFIG_PATH"
+
+# Create the config file if it doesn't exist
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "Creating config.ini..."
+    cat <<EOL > "$CONFIG_FILE"
+[default]
+preview_method = auto
+git_exe =
+use_uv = False
+channel_url = https://raw.githubusercontent.com/ltdrdata/ComfyUI-Manager/main
+share_option = all
+bypass_ssl = False
+file_logging = True
+component_policy = workflow
+update_policy = stable-comfyui
+windows_selector_event_loop_policy = False
+model_download_by_agent = False
+downgrade_blacklist =
+security_level = normal
+skip_migration_check = False
+always_lazy_install = False
+network_mode = public
+db_mode = cache
+EOL
+else
+    echo "config.ini already exists. Updating preview_method..."
+    sed -i 's/^preview_method = .*/preview_method = auto/' "$CONFIG_FILE"
+fi
+echo "Config file setup complete!"
+    echo "Default preview method updated to 'auto'"
+else
+    echo "Skipping preview method update (change_preview_method is not 'true')."
+fi
 
 # Start ComfyUI
 echo "Starting ComfyUI"
