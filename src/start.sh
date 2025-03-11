@@ -115,12 +115,6 @@ if [ ! -f "$NETWORK_VOLUME/ComfyUI/models/sams/sam_vit_b_01ec64.pth" ]; then
     https://huggingface.co/datasets/Gourieff/ReActor/resolve/main/models/sams/sam_vit_b_01ec64.pth
 fi
 
-
-if [ ! -f "$NETWORK_VOLUME/ComfyUI/models/upscale_models/OmniSR_X2_DIV2K.safetensors" ]; then
-    wget -O "$NETWORK_VOLUME/ComfyUI/models/upscale_models/OmniSR_X2_DIV2K.safetensors" \
-    https://huggingface.co/Acly/Omni-SR/resolve/main/OmniSR_X2_DIV2K.safetensors
-fi
-
 mkdir -p "$NETWORK_VOLUME/ComfyUI/models/ultralytics/bbox"
 if [ ! -f "$NETWORK_VOLUME/ComfyUI/models/ultralytics/bbox/Eyes.pt" ]; then
     if [ -f "/Eyes.pt" ]; then
