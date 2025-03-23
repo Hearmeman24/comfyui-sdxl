@@ -172,7 +172,7 @@ mkdir -p "$WORKFLOW_DIR"
 
 cd /
 
-WORKFLOWS=("SDXL_Upscaling.json" "Basic_SDXL.json" "SDXL_LATENT_UPSCALING_V2.json")
+WORKFLOWS=("SDXL_Upscaling.json" "Basic_SDXL.json" "SDXL_LATENT_UPSCALING_V2.json" "SDXL_Consistent_Character_No_Lora.json")
 
 for WORKFLOW in "${WORKFLOWS[@]}"; do
     if [ -f "./$WORKFLOW" ]; then
