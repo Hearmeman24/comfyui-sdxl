@@ -49,6 +49,44 @@ mv CivitAI_Downloader/download_with_aria.py "/usr/local/bin/" || { echo "Move fa
 chmod +x "/usr/local/bin/download_with_aria.py" || { echo "Chmod failed"; exit 1; }
 rm -rf CivitAI_Downloader  # Clean up the cloned repo
 
+download_model() {
+    local url="$1"
+    local full_path="$2"
+
+    local destination_dir=$(dirname "$full_path")
+    local destination_file=$(basename "$full_path")
+
+    mkdir -p "$destination_dir"
+
+    # Simple corruption check: file < 10MB or .aria2 files
+    if [ -f "$full_path" ]; then
+        local size_bytes=$(stat -f%z "$full_path" 2>/dev/null || stat -c%s "$full_path" 2>/dev/null || echo 0)
+        local size_mb=$((size_bytes / 1024 / 1024))
+
+        if [ "$size_bytes" -lt 10485760 ]; then  # Less than 10MB
+            echo "🗑️  Deleting corrupted file (${size_mb}MB < 10MB): $full_path"
+            rm -f "$full_path"
+        else
+            echo "✅ $destination_file already exists (${size_mb}MB), skipping download."
+            return 0
+        fi
+    fi
+
+    # Check for and remove .aria2 control files
+    if [ -f "${full_path}.aria2" ]; then
+        echo "🗑️  Deleting .aria2 control file: ${full_path}.aria2"
+        rm -f "${full_path}.aria2"
+        rm -f "$full_path"  # Also remove any partial file
+    fi
+
+    echo "📥 Downloading $destination_file to $destination_dir..."
+
+    # Download without falloc (since it's not supported in your environment)
+    aria2c -x 16 -s 16 -k 1M --continue=true -d "$destination_dir" -o "$destination_file" "$url" &
+
+    echo "Download started in background for $destination_file"
+}
+
 if [ "$download_faceid" == "true" ]; then
   # Define target directories
   IPADAPTER_DIR="$NETWORK_VOLUME/ComfyUI/models/ipadapter"
@@ -58,69 +96,39 @@ if [ "$download_faceid" == "true" ]; then
   mkdir -p "$IPADAPTER_DIR"
   mkdir -p "$CLIPVISION_DIR"
 
-  # Declare an associative array for IP-Adapter files
-  declare -A IPADAPTER_FILES=(
-      ["ip-adapter-plus-face_sdxl_vit-h.safetensors"]="https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/ip-adapter-plus-face_sdxl_vit-h.safetensors"
-      ["ip-adapter-plus_sdxl_vit-h.safetensors"]="https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/ip-adapter-plus_sdxl_vit-h.safetensors"
-      ["ip-adapter_sdxl_vit-h.safetensors"]="https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/ip-adapter_sdxl_vit-h.safetensors"
-      ["ip-adapter-faceid-plusv2_sdxl.bin"]="https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid-plusv2_sdxl.bin"
-  )
+  # Download IP-Adapter files
+  echo "📥 Starting IP-Adapter downloads..."
+  download_model "https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/ip-adapter-plus-face_sdxl_vit-h.safetensors" "$IPADAPTER_DIR/ip-adapter-plus-face_sdxl_vit-h.safetensors"
+  download_model "https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/ip-adapter-plus_sdxl_vit-h.safetensors" "$IPADAPTER_DIR/ip-adapter-plus_sdxl_vit-h.safetensors"
+  download_model "https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/ip-adapter_sdxl_vit-h.safetensors" "$IPADAPTER_DIR/ip-adapter_sdxl_vit-h.safetensors"
+  download_model "https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid-plusv2_sdxl.bin" "$IPADAPTER_DIR/ip-adapter-faceid-plusv2_sdxl.bin"
 
-  # Declare an associative array for CLIP Vision files
-  declare -A CLIPVISION_FILES=(
-      ["CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors"]="https://huggingface.co/h94/IP-Adapter/resolve/main/models/image_encoder/model.safetensors"
-      ["CLIP-ViT-bigG-14-laion2B-39B-b160k.safetensors"]="https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/image_encoder/model.safetensors"
-  )
+  # Download CLIP Vision files
+  echo "📥 Starting CLIP Vision downloads..."
+  download_model "https://huggingface.co/h94/IP-Adapter/resolve/main/models/image_encoder/model.safetensors" "$CLIPVISION_DIR/CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors"
+  download_model "https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/image_encoder/model.safetensors" "$CLIPVISION_DIR/CLIP-ViT-bigG-14-laion2B-39B-b160k.safetensors"
 
-  # Function to download files
-  download_files() {
-      local TARGET_DIR=$1
-      declare -n FILES=$2  # Reference the associative array
-
-      for FILE in "${!FILES[@]}"; do
-          FILE_PATH="$TARGET_DIR/$FILE"
-          if [ ! -f "$FILE_PATH" ]; then
-              wget -O "$FILE_PATH" "${FILES[$FILE]}"
-          else
-              echo "$FILE already exists, skipping download."
-          fi
-      done
-  }
-download_files "$IPADAPTER_DIR" IPADAPTER_FILES
-download_files "$CLIPVISION_DIR" CLIPVISION_FILES
-if [ ! -f "$NETWORK_VOLUME/ComfyUI/models/loras/ip-adapter-faceid-plusv2_sdxl_lora.safetensors" ]; then
-    wget -O "$NETWORK_VOLUME/ComfyUI/models/loras/ip-adapter-faceid-plusv2_sdxl_lora.safetensors" \
-    https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid-plusv2_sdxl_lora.safetensors
-fi
+  # Download FaceID LoRA
+  echo "📥 Starting FaceID LoRA download..."
+  download_model "https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid-plusv2_sdxl_lora.safetensors" "$NETWORK_VOLUME/ComfyUI/models/loras/ip-adapter-faceid-plusv2_sdxl_lora.safetensors"
 fi
 
 if [ "$download_union_control_net" == "true" ]; then
-  mkdir -p "$NETWORK_VOLUME/ComfyUI/models/controlnet/SDXL/controlnet-union-sdxl-1.0"
-  if [ ! -f "$NETWORK_VOLUME/ComfyUI/models/controlnet/SDXL/controlnet-union-sdxl-1.0" ]; then
-      wget -O "$NETWORK_VOLUME/ComfyUI/models/controlnet/SDXL/controlnet-union-sdxl-1.0/diffusion_pytorch_model_promax.safetensors" \
-      https://huggingface.co/xinsir/controlnet-union-sdxl-1.0/resolve/main/diffusion_pytorch_model_promax.safetensors
-  fi
+  echo "📥 Starting Union ControlNet download..."
+  download_model "https://huggingface.co/xinsir/controlnet-union-sdxl-1.0/resolve/main/diffusion_pytorch_model_promax.safetensors" "$NETWORK_VOLUME/ComfyUI/models/controlnet/SDXL/controlnet-union-sdxl-1.0/diffusion_pytorch_model_promax.safetensors"
 fi
+
+# Download additional models
+echo "📥 Starting additional model downloads..."
 
 # Download upscale model
-echo "Downloading additional models"
-mkdir -p "$NETWORK_VOLUME/ComfyUI/models/upscale_models"
-if [ ! -f "$NETWORK_VOLUME/ComfyUI/models/upscale_models/4x_foolhardy_Remacri.pt" ]; then
-    wget -O "$NETWORK_VOLUME/ComfyUI/models/upscale_models/4x_foolhardy_Remacri.pt" \
-    https://huggingface.co/FacehugmanIII/4x_foolhardy_Remacri/resolve/main/4x_foolhardy_Remacri.pth
-fi
+download_model "https://huggingface.co/FacehugmanIII/4x_foolhardy_Remacri/resolve/main/4x_foolhardy_Remacri.pth" "$NETWORK_VOLUME/ComfyUI/models/upscale_models/4x_foolhardy_Remacri.pt"
 
-mkdir -p "$NETWORK_VOLUME/ComfyUI/models/ultralytics/segm"
-if [ ! -f "$NETWORK_VOLUME/ComfyUI/models/ultralytics/segm/face_yolov8m-seg_60.pt" ]; then
-    wget -O "$NETWORK_VOLUME/ComfyUI/models/ultralytics/segm/face_yolov8m-seg_60.pt" \
-    https://huggingface.co/24xx/segm/resolve/main/face_yolov8m-seg_60.pt
-fi
+# Download face segmentation model
+download_model "https://huggingface.co/24xx/segm/resolve/main/face_yolov8m-seg_60.pt" "$NETWORK_VOLUME/ComfyUI/models/ultralytics/segm/face_yolov8m-seg_60.pt"
 
-mkdir -p "$NETWORK_VOLUME/ComfyUI/models/sams"
-if [ ! -f "$NETWORK_VOLUME/ComfyUI/models/sams/sam_vit_b_01ec64.pth" ]; then
-    wget -O "$NETWORK_VOLUME/ComfyUI/models/sams/sam_vit_b_01ec64.pth" \
-    https://huggingface.co/datasets/Gourieff/ReActor/resolve/main/models/sams/sam_vit_b_01ec64.pth
-fi
+# Download SAM model
+download_model "https://huggingface.co/datasets/Gourieff/ReActor/resolve/main/models/sams/sam_vit_b_01ec64.pth" "$NETWORK_VOLUME/ComfyUI/models/sams/sam_vit_b_01ec64.pth"
 
 mkdir -p "$NETWORK_VOLUME/ComfyUI/models/ultralytics/bbox"
 if [ ! -f "$NETWORK_VOLUME/ComfyUI/models/ultralytics/bbox/Eyes.pt" ]; then
@@ -173,7 +181,7 @@ for TARGET_DIR in "${!MODEL_CATEGORIES[@]}"; do
     IFS=',' read -ra MODEL_IDS <<< "${MODEL_CATEGORIES[$TARGET_DIR]}"
 
     for MODEL_ID in "${MODEL_IDS[@]}"; do
-        sleep 8
+        sleep 6
         echo "🚀 Scheduling download: $MODEL_ID to $TARGET_DIR"
         (cd "$TARGET_DIR" && download_with_aria.py -m "$MODEL_ID") &
         ((download_count++))
