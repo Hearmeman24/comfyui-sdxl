@@ -173,6 +173,7 @@ for TARGET_DIR in "${!MODEL_CATEGORIES[@]}"; do
     IFS=',' read -ra MODEL_IDS <<< "${MODEL_CATEGORIES[$TARGET_DIR]}"
 
     for MODEL_ID in "${MODEL_IDS[@]}"; do
+        sleep 5
         echo "🚀 Scheduling download: $MODEL_ID to $TARGET_DIR"
         (cd "$TARGET_DIR" && download_with_aria.py -m "$MODEL_ID") &
         ((download_count++))
