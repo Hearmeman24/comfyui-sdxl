@@ -154,18 +154,31 @@ declare -A MODEL_CATEGORIES=(
     ["$NETWORK_VOLUME/ComfyUI/models/loras"]="$LORAS_IDS_TO_DOWNLOAD"
 )
 
-# Ensure directories exist and download models
+# Counter to track background jobs
+download_count=0
+
+# Ensure directories exist and schedule downloads in background
 for TARGET_DIR in "${!MODEL_CATEGORIES[@]}"; do
     mkdir -p "$TARGET_DIR"
     IFS=',' read -ra MODEL_IDS <<< "${MODEL_CATEGORIES[$TARGET_DIR]}"
 
     for MODEL_ID in "${MODEL_IDS[@]}"; do
-        echo "Downloading model: $MODEL_ID to $TARGET_DIR"
-        (cd "$TARGET_DIR" && download_with_aria.py -m "$MODEL_ID")
+        echo "🚀 Scheduling download: $MODEL_ID to $TARGET_DIR"
+        (cd "$TARGET_DIR" && download_with_aria.py -m "$MODEL_ID") &
+        ((download_count++))
     done
 done
 
-echo "All models downloaded successfully!"
+echo "📋 Scheduled $download_count downloads in background"
+
+# Wait for all downloads to complete
+echo "⏳ Waiting for downloads to complete..."
+while pgrep -x "aria2c" > /dev/null; do
+    echo "🔽 Downloads still in progress..."
+    sleep 5  # Check every 5 seconds
+done
+
+echo "✅ All models downloaded successfully!"
 
 echo "Checking and copying workflow..."
 mkdir -p "$WORKFLOW_DIR"
