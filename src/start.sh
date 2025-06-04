@@ -16,6 +16,13 @@ else
     echo "additional_params.sh not found in /workspace. Skipping..."
 fi
 
+if ! which aria2 > /dev/null 2>&1; then
+    echo "Installing aria2..."
+    apt-get update && apt-get install -y aria2
+else
+    echo "aria2 is already installed"
+fi
+
 # Check if NETWORK_VOLUME exists; if not, use root directory instead
 if [ ! -d "$NETWORK_VOLUME" ]; then
     echo "NETWORK_VOLUME directory '$NETWORK_VOLUME' does not exist. You are NOT using a network volume. Setting NETWORK_VOLUME to '/' (root directory)."
