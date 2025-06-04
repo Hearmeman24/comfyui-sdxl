@@ -143,10 +143,13 @@ if [ ! -f "$NETWORK_VOLUME/ComfyUI/models/upscale_models/4xLSDIR.pth" ]; then
 else
     echo "4xLSDIR.pth already exists. Skipping."
 fi
+
 if [ ! -f "$NETWORK_VOLUME/ComfyUI/models/upscale_models/4xFaceUpDAT.pth" ]; then
     if [ -f "/4xFaceUpDAT.pth" ]; then
-        mv "/4xFaceUpDAT.pth" "$NETWORK_VOLUME/ComfyUI/models/upscale_models/4xFaceUpDAT.pth"
-        echo "Moved 4xFaceUpDAT.pth to the correct location."
+        cd "$NETWORK_VOLUME/ComfyUI/models/upscale_models/4xFaceUpDAT.pth"
+        wget "https://huggingface.co/RafaG/models-ESRGAN/resolve/82caaaedb2d27e9f76472351828178b62995c2f1/4xFaceUpLDAT.pth"
+        echo "Downloaded 4xFaceUpDAT.pth to the correct location."
+        cd /
     else
         echo "4xFaceUpDAT.pth not found in the root directory."
     fi
@@ -190,20 +193,27 @@ echo "✅ All models downloaded successfully!"
 echo "Checking and copying workflow..."
 mkdir -p "$WORKFLOW_DIR"
 
+# Ensure the file exists in the current directory before moving it
 cd /
 
-WORKFLOWS=("SDXL_Upscaling.json" "Basic_SDXL.json" "SDXL_LATENT_UPSCALING_V2.json" "SDXL_Consistent_Character_No_Lora.json")
+SOURCE_DIR="/comfyui-sdxl/workflows"
 
-for WORKFLOW in "${WORKFLOWS[@]}"; do
-    if [ -f "./$WORKFLOW" ]; then
-        if [ ! -f "$WORKFLOW_DIR/$WORKFLOW" ]; then
-            mv "./$WORKFLOW" "$WORKFLOW_DIR"
-            echo "$WORKFLOW copied."
-        else
-            echo "$WORKFLOW already exists in the target directory, skipping move."
-        fi
+# Ensure destination directory exists
+mkdir -p "$WORKFLOW_DIR"
+
+# Loop over each file in the source directory
+for file in "$SOURCE_DIR"/*; do
+    # Skip if it's not a file
+    [[ -f "$file" ]] || continue
+
+    dest_file="$WORKFLOW_DIR/$(basename "$file")"
+
+    if [[ -e "$dest_file" ]]; then
+        echo "File already exists in destination. Deleting: $file"
+        rm -f "$file"
     else
-        echo "$WORKFLOW not found in the current directory."
+        echo "Moving: $file to $WORKFLOW_DIR"
+        mv "$file" "$WORKFLOW_DIR"
     fi
 done
 

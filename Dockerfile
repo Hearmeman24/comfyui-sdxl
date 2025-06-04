@@ -65,7 +65,6 @@ RUN for repo in \
     https://github.com/ltdrdata/ComfyUI-Impact-Subpack.git \
     https://github.com/Jonseed/ComfyUI-Detail-Daemon.git \
     https://github.com/shadowcz007/comfyui-mixlab-nodes.git \
-    https://github.com/Gourieff/ComfyUI-ReActor.git \
     https://github.com/chflame163/ComfyUI_LayerStyle_Advance.git \
     https://github.com/cubiq/ComfyUI_IPAdapter_plus.git \
     https://github.com/chrisgoringe/cg-use-everywhere.git \
@@ -87,12 +86,7 @@ RUN for repo in \
     done
 
 COPY src/start_script.sh /start_script.sh
-COPY Basic_SDXL.json /Basic_SDXL.json
-COPY SDXL_Upscaling.json /SDXL_Upscaling.json
-COPY SDXL_LATENT_UPSCALING_V2.json /SDXL_LATENT_UPSCALING_V2.json
-COPY SDXL_Consistent_Character_No_Lora.json /SDXL_Consistent_Character_No_Lora.json
 COPY Eyes.pt /Eyes.pt
 COPY 4xLSDIR.pth /4xLSDIR.pth
-COPY 4xFaceUpDAT.pth /4xFaceUpDAT.pth
 
 CMD ["/start_script.sh"]
