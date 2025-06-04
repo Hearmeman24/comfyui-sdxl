@@ -85,7 +85,9 @@ RUN for repo in \
         fi; \
     done
 
+
 COPY src/start_script.sh /start_script.sh
+RUN chmod +x /start_script.sh
 COPY Eyes.pt /Eyes.pt
 COPY 4xLSDIR.pth /4xLSDIR.pth
 
