@@ -280,11 +280,12 @@ until curl --silent --fail "$URL" --output /dev/null; do
   echo "🔄  ComfyUI Starting Up... You can view the startup logs here: $NETWORK_VOLUME/comfyui_${RUNPOD_POD_ID}_nohup.log"
   sleep 2
 done
-echo "ComfyUI is ready, overriding model whitelist..."
+echo "ComfyUI is UP, overriding model whitelist..."
 cat > $NETWORK_VOLUME/ComfyUI/user/default/ComfyUI-Impact-Subpack/model-whitelist.txt << 'EOF'
 Eyes.pt
 face_yolov8m-seg_60.pt
 person_yolov8m-seg.pt
 EOF
+echo "🚀 ComfyUI is ready"
 sleep infinity
 
