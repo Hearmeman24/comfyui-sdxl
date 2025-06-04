@@ -273,6 +273,7 @@ else
     echo "Skipping preview method update (change_preview_method is not 'true')."
 fi
 
+URL="http://127.0.0.1:8188"
 echo "Starting ComfyUI"
 nohup python3 "$NETWORK_VOLUME/ComfyUI/main.py" --listen > "$NETWORK_VOLUME/comfyui_${RUNPOD_POD_ID}_nohup.log" 2>&1 &
 until curl --silent --fail "$URL" --output /dev/null; do
