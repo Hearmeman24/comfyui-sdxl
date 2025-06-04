@@ -4,6 +4,8 @@
 TCMALLOC="$(ldconfig -p | grep -Po "libtcmalloc.so.\d" | head -n 1)"
 export LD_PRELOAD="${TCMALLOC}"
 
+pip install insightface==0.7.3 &
+
 # Set the network volume path
 NETWORK_VOLUME="/workspace"
 
@@ -36,6 +38,7 @@ fi
 
 COMFYUI_DIR="$NETWORK_VOLUME/ComfyUI"
 WORKFLOW_DIR="$NETWORK_VOLUME/ComfyUI/user/default/workflows"
+MODEL_WHITELIST_DIR="$NETWORK_VOLUME/ComfyUI/user/default/ComfyUI-Impact-Subpack/model-whitelist.txt"
 
 if [ ! -d "$COMFYUI_DIR" ]; then
     mv /ComfyUI "$COMFYUI_DIR"
@@ -269,6 +272,13 @@ echo "Config file setup complete!"
 else
     echo "Skipping preview method update (change_preview_method is not 'true')."
 fi
+
+#override model whitelist ffs
+cat > filename.txt << 'EOF'
+Eyes.pt
+face_yolov8m-seg_60.pt
+person_yolov8m-seg.pt
+EOF
 
 # Start ComfyUI
 echo "Starting ComfyUI"
