@@ -273,13 +273,22 @@ else
     echo "Skipping preview method update (change_preview_method is not 'true')."
 fi
 
-#override model whitelist ffs
+echo "Starting ComfyUI"
+python3 "$NETWORK_VOLUME/ComfyUI/main.py" --listen &
+COMFYUI_PID=$!
+
+# Wait for ComfyUI to be ready (check for port 8188 or log message)
+echo "Waiting for ComfyUI to initialize..."
+while ! nc -z localhost 8188 2>/dev/null; do
+    sleep 2
+done
+
+# Override model whitelist after ComfyUI is ready
+echo "ComfyUI is ready, overriding model whitelist..."
 cat > $NETWORK_VOLUME/ComfyUI/user/default/ComfyUI-Impact-Subpack/model-whitelist.txt << 'EOF'
 Eyes.pt
 face_yolov8m-seg_60.pt
 person_yolov8m-seg.pt
 EOF
 
-# Start ComfyUI
-echo "Starting ComfyUI"
-python3 "$NETWORK_VOLUME/ComfyUI/main.py" --listen
+wait $COMFYUI_PID
