@@ -38,8 +38,8 @@ fi
 
 echo "Downloading CivitAI download script to /usr/local/bin"
 git clone "https://github.com/Hearmeman24/CivitAI_Downloader.git" || { echo "Git clone failed"; exit 1; }
-mv CivitAI_Downloader/download.py "/usr/local/bin/" || { echo "Move failed"; exit 1; }
-chmod +x "/usr/local/bin/download.py" || { echo "Chmod failed"; exit 1; }
+mv CivitAI_Downloader/download_with_aria.py "/usr/local/bin/" || { echo "Move failed"; exit 1; }
+chmod +x "/usr/local/bin/download_with_aria.py" || { echo "Chmod failed"; exit 1; }
 rm -rf CivitAI_Downloader  # Clean up the cloned repo
 
 if [ "$download_faceid" == "true" ]; then
@@ -161,7 +161,7 @@ for TARGET_DIR in "${!MODEL_CATEGORIES[@]}"; do
 
     for MODEL_ID in "${MODEL_IDS[@]}"; do
         echo "Downloading model: $MODEL_ID to $TARGET_DIR"
-        (cd "$TARGET_DIR" && download.py --model "$MODEL_ID")
+        (cd "$TARGET_DIR" && download_with_aria.py -m "$MODEL_ID")
     done
 done
 
