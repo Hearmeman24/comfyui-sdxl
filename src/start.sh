@@ -274,7 +274,7 @@ else
 fi
 
 #override model whitelist ffs
-cat > filename.txt << 'EOF'
+cat > $NETWORK_VOLUME/ComfyUI/user/default/ComfyUI-Impact-Subpack/model-whitelist.txt << 'EOF'
 Eyes.pt
 face_yolov8m-seg_60.pt
 person_yolov8m-seg.pt
